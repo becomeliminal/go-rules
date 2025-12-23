@@ -99,9 +99,11 @@ def cgo_library(
             'h': [subdir2 + '_cgo_export.h'],
         },
         cmd = ' && '.join([
+            # Make tool path absolute before cd since tools may be relative to $TMP_DIR in remote execution
+            'case "$TOOLS_GO" in /*) GO_TOOL="$TOOLS_GO";; *) GO_TOOL="$TMP_DIR/$TOOLS_GO";; esac',
             (f'OUT_DIR="$TMP_DIR/{subdir}" && mkdir -p "$OUT_DIR"') if subdir else 'OUT_DIR="$TMP_DIR"',
             'cd $PKG_DIR/' + subdir,
-            f'$TOOLS_GO tool cgo -objdir "$OUT_DIR" -importpath {import_path} -trimpath "$TMP_DIR" -- {compiler_flags_cmd} *.go',
+            f'"$GO_TOOL" tool cgo -objdir "$OUT_DIR" -importpath {import_path} -trimpath "$TMP_DIR" -- {compiler_flags_cmd} *.go',
             # Remove the .o file which BSD sed gets upset about in the next command
             'rm -f "$OUT_DIR"/_cgo_.o "$OUT_DIR"/_cgo_main.c',
             'cd "$TMP_DIR"',
